@@ -96,10 +96,10 @@ class EmbeddingModel:
         """
         return [sentences[i:i + slice_size] for i in range(0, len(sentences), slice_size)]
 
-    def _process_chunk(self,chunk: list):
+    def _process_chunk(self,chunk: list,page_number):
         chunk_info = {}
         for item in chunk:
-            chunk_info["page_number"] = item["page_number"]
+            chunk_info["page_number"] = page_number
             joined_sentence_chunk = "".join(item).replace("  ", " ").strip()
             joined_sentence_chunk = re.sub(r'\.([A-Z])', r'. \1',
                                            joined_sentence_chunk)  # ".A" -> ". A" for any full-stop/capital letter combo
@@ -125,9 +125,10 @@ class EmbeddingModel:
             page["sentence_chunks"] = chunked_sentences
             page["sentence_chunks_len"] = len(chunked_sentences)
 
-            self.pages_and_chunks.append(self._process_chunk(chunked_sentences))
+            self.pages_and_chunks.append(self._process_chunk(chunked_sentences,page_number = page["page_number"]))
 
     def embed(self):
+        check_file_exits(file_path=PDF_PATH, allow_download=True, download_url=PDF_URL)
         self.parse_pdf()
         pages_and_chunks_df = pd.DataFrame(self.pages_and_chunks)
         pages_and_chunks_dict = pages_and_chunks_df.to_dict(orient="records")
